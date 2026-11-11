@@ -1,104 +1,674 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AM Technology | Painel Administrativo Premium</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AM Technology | Painel Administrativo Premium (Demonstração)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0lLW90e0p-bGgVvcuK6yqSHqdGE4gKhc",
+      authDomain: "site-danilo-config.firebaseapp.com",
+      projectId: "site-danilo-config",
+      storageBucket: "site-danilo-config.firebasestorage.app",
+      messagingSenderId: "109226079646",
+      appId: "1:109226079646:web:256beb9a3d91afda33928f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.dbFirestore = db;
+    window.fsDoc = doc;
+    window.fsSetDoc = setDoc;
+    window.fsGetDoc = getDoc;
+    window.fsCollection = collection;
+    window.fsAddDoc = addDoc;
+    window.fsGetDocs = getDocs;
+
+    if (typeof carregarDadosServidor === 'function') {
+      carregarDadosServidor();
+    }
+  </script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 sm:p-8 flex justify-center items-start">
 
-    <!-- Header -->
-    <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center">
+  <!-- TELA DE LOGIN -->
+  <div id="login-screen" class="w-full max-w-sm bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-2xl space-y-4 mt-12">
+    <div class="text-center space-y-2">
+      <div class="w-12 h-12 bg-indigo-900/50 text-indigo-400 rounded-full flex items-center justify-center mx-auto border border-indigo-500/30">
+        <i data-lucide="lock" class="w-6 h-6"></i>
+      </div>
+      <h2 class="text-lg font-bold text-slate-100">AM Technology</h2>
+      <p class="text-xs text-slate-400">Painel Demonstração Premium (Insira a senha)</p>
+    </div>
+    <input type="password" id="input-senha" placeholder="Digite a senha (padrão: 1234)..." class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center">
+    <button onclick="verificarSenha()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg">
+      Entrar no Painel Premium
+    </button>
+  </div>
+
+  <!-- CONTEÚDO DO PAINEL ADMIN -->
+  <div id="admin-content" class="w-full max-w-4xl space-y-6 hidden">
+    
+    <!-- TOPO -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 id="titulo-topo-admin" class="text-2xl font-bold text-slate-100 uppercase tracking-tight">Barbearia do Bellan</h1>
+          <span class="bg-indigo-900/50 text-indigo-300 border border-indigo-500/30 text-xs px-2.5 py-1 rounded-full font-bold">Plano Premium</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">AM Technology — Demonstração de Gestão Completa</p>
+      </div>
+      <button onclick="sair()" class="text-xs text-slate-400 hover:text-red-400 flex items-center gap-1 transition-all">
+        <i data-lucide="log-out" class="w-4 h-4"></i> Sair
+      </button>
+    </div>
+
+    <!-- 📊 NOVIDADE PREMIUM: DASHBOARD DE FATURAMENTO E MÉTRICAS -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+        <p class="text-xs font-bold uppercase text-slate-400">Faturamento Estimado (Mês)</p>
+        <h3 id="stat-faturamento" class="text-2xl font-bold text-emerald-400 mt-1">R$ 0,00</h3>
+        <span class="text-xs text-emerald-500 mt-2 inline-block">📈 Baseado nos agendamentos reais</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+        <p class="text-xs font-bold uppercase text-slate-400">Atendimentos Registados</p>
+        <h3 id="stat-atendimentos" class="text-2xl font-bold text-white mt-1">0</h3>
+        <span class="text-xs text-slate-400 mt-2 inline-block">Total na base de dados</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+        <p class="text-xs font-bold uppercase text-slate-400">Disparos WhatsApp (Meta API)</p>
+        <h3 class="text-2xl font-bold text-indigo-400 mt-1">Ativo / Seguro</h3>
+        <span class="text-xs text-indigo-300 mt-2 inline-block">Franquia Premium (1000 msg)</span>
+      </div>
+    </div>
+
+    <!-- 💰 NOVIDADE PREMIUM: CÁLCULO DE COMISSÕES DA EQUIPA -->
+    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-base font-bold text-slate-200 flex items-center gap-2">
+          <i data-lucide="dollar-sign" class="w-5 h-5 text-indigo-400"></i> Cálculo Automático de Comissões (Repasse por Profissional)
+        </h2>
+        <span class="text-xs text-slate-400 font-mono">Comissão Padrão: 50%</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-xs">
+            <tr>
+              <th class="p-3">Profissional</th>
+              <th class="p-3">Total Serviços</th>
+              <th class="p-3">Faturamento Gerado</th>
+              <th class="p-3">Comissão (50%)</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-comissoes-corpo" class="divide-y divide-slate-800">
+            <!-- Preenchido via JavaScript dinamicamente -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SELECIONAR BARBEIRO ATIVO -->
+    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-3 shadow-xl">
+      <h2 class="text-base font-bold text-slate-200 flex items-center gap-2">
+        <i data-lucide="user-check" class="w-5 h-5 text-slate-400"></i> A Gerir a Sub-Agenda de:
+      </h2>
+      <select id="select-barbeiro-ativo" onchange="mudarBarbeiroAtivo(this.value)" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 font-bold focus:outline-none"></select>
+    </div>
+
+    <!-- IDENTIDADE -->
+    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+      <h2 class="text-base font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
+        <i data-lucide="image" class="w-5 h-5 text-slate-400"></i> Identidade & Cores
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="space-y-2">
+          <label class="block text-xs font-bold uppercase text-slate-400">Nome da Barbearia</label>
+          <input type="text" id="input-nome-barbearia" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none">
+        </div>
+        <div class="space-y-2">
+          <label class="block text-xs font-bold uppercase text-slate-400">Logótipo</label>
+          <input type="file" id="input-arquivo-logo" accept="image/*" onchange="converterLogoParaBase64(this)" class="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500">
+        </div>
+        <div class="space-y-2">
+          <label class="block text-xs font-bold uppercase text-slate-400">Paleta de Cores</label>
+          <select id="input-cor-tema" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none">
+            <option value="zinc">Preto & Cinza (Clássico)</option>
+            <option value="amber">Dourado / Luxo</option>
+            <option value="emerald">Verde Executivo</option>
+            <option value="blue">Azul Sofisticado</option>
+          </select>
+        </div>
+      </div>
+      <div id="preview-logo-container" class="hidden items-center gap-3 pt-2">
+        <span class="text-xs text-slate-400">Logótipo carregado:</span>
+        <img id="preview-logo-img" src="" class="w-12 h-12 rounded-full object-cover border border-slate-700">
+      </div>
+      <button onclick="salvarConfiguracoesServidor('Identidade atualizada!')" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg">
+        Guardar Identidade & Cores
+      </button>
+    </div>
+
+    <!-- ADICIONAR / GERIR PROFISSIONAIS -->
+    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+      <h2 class="text-base font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
+        <i data-lucide="users" class="w-5 h-5 text-slate-400"></i> Profissionais da Equipa (Sub-agendas)
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <input type="text" id="novo-barbeiro-nome" placeholder="Nome (Ex: Outro Barbeiro)" class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none">
+        <input type="tel" id="novo-barbeiro-whats" placeholder="WhatsApp (Ex: 19999999999)" class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none">
+        <button onclick="adicionarBarbeiro()" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1">
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Adicionar Barbeiro
+        </button>
+      </div>
+      <div class="space-y-2" id="lista-barbeiros-admin"></div>
+    </div>
+
+    <!-- WHATSAPP DO PROFISSIONAL & SENHA -->
+    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+      <h2 class="text-base font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
+        <i data-lucide="share-2" class="w-5 h-5 text-slate-400"></i> WhatsApp do Profissional & Senha
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+          <label class="block text-xs font-bold uppercase text-slate-400">WhatsApp do Barbeiro Ativo</label>
+          <input type="tel" id="input-whats-barbeiro" class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none">
+        </div>
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+          <label class="block text-xs font-bold uppercase text-slate-400">Nova Senha do Painel</label>
+          <input type="password" id="input-nova-senha" placeholder="Deixe em branco" class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none">
+        </div>
+      </div>
+      <button onclick="salvarConfiguracoesServidor('Canais e senha atualizados!')" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg">
+        Guardar Canais e Senha
+      </button>
+    </div>
+
+    <!-- AGENDA DO DIA COM BOTÃO DIRETO WHATSAPP -->
+    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-3">
+        <h2 class="text-base font-bold text-slate-200 flex items-center gap-2">
+          <i data-lucide="calendar" class="w-5 h-5 text-slate-400"></i> Agenda do Barbeiro Selecionado
+        </h2>
+        <button onclick="copiarResumoDiaParaTodos()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 shadow-md">
+          <i data-lucide="share-2" class="w-4 h-4"></i> Copiar Lista Completa
+        </button>
+      </div>
+      <div class="flex items-center bg-slate-950 p-4 rounded-xl border border-slate-800">
+        <div class="w-full">
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Selecionar Data</label>
+          <input type="date" id="filtro-data-agenda" onchange="renderizarAgendaDoDia()" class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 font-bold focus:outline-none">
+        </div>
+      </div>
+      <div id="lista-agendamentos-dia" class="space-y-3 max-h-72 overflow-y-auto">
+        <p class="text-xs text-slate-500 text-center py-4">Selecione uma data para ver os agendamentos.</p>
+      </div>
+    </div>
+
+    <!-- CRIAR RESERVA MANUAL -->
+    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+      <h2 class="text-base font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
+        <i data-lucide="user-plus" class="w-5 h-5 text-slate-400"></i> Criar Agendamento Manual
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
         <div>
-            <span class="text-xs text-indigo-400 font-bold uppercase tracking-wider">AM Technology - Plano Premium</span>
-            <h1 class="text-xl font-bold text-white">Painel de Gestão e Faturamento</h1>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Nome do Cliente</label>
+          <input type="text" id="manual-nome" placeholder="Ex: Carlos Silva" class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none">
         </div>
-        <div class="bg-indigo-900/50 border border-indigo-500/30 text-indigo-300 px-3 py-1 rounded-full text-xs font-medium">
-            🟢 Sistema Online & WhatsApp Ativo
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Serviço</label>
+          <select id="manual-servico" class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none"></select>
         </div>
-    </header>
-
-    <main class="max-w-6xl mx-auto p-6 space-y-6">
-
-        <!-- Bloco de Métricas / Faturamento (Exclusivo Premium) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
-                <p class="text-sm text-slate-400">Faturamento Estimado (Mês)</p>
-                <h3 class="text-2xl font-bold text-emerald-400 mt-1">R$ 4.850,00</h3>
-                <span class="text-xs text-emerald-500 mt-2 inline-block">↑ +12% que o mês passado</span>
-            </div>
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
-                <p class="text-sm text-slate-400">Atendimentos Realizados</p>
-                <h3 class="text-2xl font-bold text-white mt-1">118</h3>
-                <span class="text-xs text-slate-400 mt-2 inline-block">Média de 4 por dia / prof.</span>
-            </div>
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl shadow">
-                <p class="text-sm text-slate-400">Disparos WhatsApp (Meta API)</p>
-                <h3 class="text-2xl font-bold text-indigo-400 mt-1">210 / 1000</h3>
-                <span class="text-xs text-indigo-300 mt-2 inline-block">Franquia Premium segura</span>
-            </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Data</label>
+          <input type="date" id="manual-data" class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 font-bold focus:outline-none">
         </div>
-
-        <!-- Gestão de Comissões da Equipa (Exclusivo Premium) -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow">
-            <h2 class="text-lg font-bold text-white mb-4">Cálculo de Comissões da Equipa (Repasse)</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-800 text-slate-400 uppercase text-xs">
-                        <tr>
-                            <th class="p-3">Profissional</th>
-                            <th class="p-3">Total de Serviços</th>
-                            <th class="p-3">Faturamento Gerado</th>
-                            <th class="p-3">Comissão (50%)</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-800">
-                        <tr>
-                            <td class="p-3 font-medium text-white">Bellan (Barbeiro)</td>
-                            <td class="p-3">54</td>
-                            <td class="p-3">R$ 2.400,00</td>
-                            <td class="p-3 text-emerald-400 font-bold">R$ 1.200,00</td>
-                        </tr>
-                        <tr>
-                            <td class="p-3 font-medium text-white">João (Barbeiro)</td>
-                            <td class="p-3">42</td>
-                            <td class="p-3">R$ 1.850,00</td>
-                            <td class="p-3 text-emerald-400 font-bold">R$ 925,00</td>
-                        </tr>
-                        <tr>
-                            <td class="p-3 font-medium text-white">Ana (Massagem)</td>
-                            <td class="p-3">22</td>
-                            <td class="p-3">R$ 600,00</td>
-                            <td class="p-3 text-emerald-400 font-bold">R$ 300,00</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Horário Inicial</label>
+          <select id="manual-horario" class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none"></select>
         </div>
-
-        <!-- Agenda do Dia e Sub-agendas -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow">
-            <h2 class="text-lg font-bold text-white mb-4">Agenda de Hoje em Tempo Real</h2>
-            <div class="space-y-3">
-                <div class="flex justify-between items-center bg-slate-800/60 p-3 rounded-lg border border-slate-700/50">
-                    <div>
-                        <span class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded font-mono">09:00</span>
-                        <strong class="ml-2 text-white">Carlos Silva</strong> (Corte de Cabelo)
-                    </div>
-                    <span class="text-sm text-slate-400">Prof: <strong class="text-white">Bellan</strong></span>
-                </div>
-                <div class="flex justify-between items-center bg-slate-800/60 p-3 rounded-lg border border-slate-700/50">
-                    <div>
-                        <span class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded font-mono">10:00</span>
-                        <strong class="ml-2 text-white">Marcos Souza</strong> (Combo Corte + Barba)
-                    </div>
-                    <span class="text-sm text-slate-400">Prof: <strong class="text-white">João</strong></span>
-                </div>
-            </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Contato / Telefone</label>
+          <input type="text" id="manual-whats" placeholder="Ex: (19) 99999-9999" class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none">
         </div>
+      </div>
+      <button onclick="criarAgendamentoManual()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg">
+        Registar Agendamento Manual
+      </button>
+    </div>
 
-    </main>
+    <!-- SERVIÇOS -->
+    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+      <h2 class="text-base font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
+        <i data-lucide="scissors" class="w-5 h-5 text-slate-400"></i> Serviços, Valores (R$) & Duração (Minutos)
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+        <input type="text" id="novo-servico-nome" placeholder="Nome do Serviço" class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none">
+        <input type="number" id="novo-servico-preco" placeholder="Valor (R$)" class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 font-bold focus:outline-none">
+        <input type="number" id="novo-servico-duracao" placeholder="Minutos" class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-slate-100 focus:outline-none">
+        <button onclick="adicionarServico()" class="py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1">
+          <i data-lucide="plus" class="w-4 h-4"></i> Adicionar
+        </button>
+      </div>
+      <div class="space-y-2" id="lista-servicos-admin"></div>
+    </div>
 
-</body>
-</html>
+    <!-- DIAS E PAUSAS -->
+    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+      <h2 class="text-base font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
+        <i data-lucide="calendar-off" class="w-5 h-5 text-slate-400"></i> Dias de Funcionamento & Pausas Fixas (07:00 às 22:00)
+      </h2>
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase text-slate-400">Dias da Semana</label>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="grid-dias-semana"></div>
+      </div>
+      <div class="pt-4 border-t border-slate-800 space-y-2">
+        <h3 class="text-sm font-bold text-slate-200">Horários de Pausa Fixa (07:00 às 22:00)</h3>
+        <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-slate-950 rounded-xl border border-slate-800 max-h-56 overflow-y-auto" id="grid-horarios-pausa-padrao"></div>
+      </div>
+      <button onclick="salvarConfiguracoesServidor('Dias e horários guardados!')" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all">
+        Guardar Configurações
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    let dadosGerais = {
+      nomeBarbearia: "Barbearia do Bellan",
+      logoUrl: "",
+      senhaBellan: "1234",
+      corTema: "zinc",
+      barbeiros: [
+        { id: 'bellan', nome: 'Bellan', whats: '', servicos: [{ id: 'corte', nome: 'Corte de Cabelo', preco: 40, duracao: 40 }], diasFechados: [], horariosPausaPadrao: [], horariosBloqueadosPorData: {} }
+      ]
+    };
+
+    let barbeiroAtivoId = 'bellan';
+
+    function obterDadosBarbeiroAtivo() {
+      if (!dadosGerais.barbeiros || dadosGerais.barbeiros.length === 0) {
+        dadosGerais.barbeiros = [{ id: 'bellan', nome: 'Bellan', whats: '', servicos: [{ id: 'corte', nome: 'Corte de Cabelo', preco: 40, duracao: 40 }], diasFechados: [], horariosPausaPadrao: [] }];
+      }
+      return dadosGerais.barbeiros.find(b => b.id === barbeiroAtivoId) || dadosGerais.barbeiros[0];
+    }
+
+    function gerarHorarios30min() {
+      const lista = [];
+      for (let h = 7; h <= 22; h++) {
+        const horaStr = h < 10 ? `0${h}` : `${h}`;
+        lista.push(`${horaStr}:00`);
+        if (h < 22) lista.push(`${horaStr}:30`);
+      }
+      return lista;
+    }
+
+    const horariosLista = gerarHorarios30min();
+    const diasSemana = [
+      { id: 0, nome: 'Domingo' }, { id: 1, nome: 'Segunda-feira' }, { id: 2, nome: 'Terça-feira' },
+      { id: 3, nome: 'Quarta-feira' }, { id: 4, nome: 'Quinta-feira' }, { id: 5, nome: 'Sexta-feira' }, { id: 6, nome: 'Sábado' }
+    ];
+
+    const hojeIso = new Date().toISOString().split('T')[0];
+    document.getElementById('manual-data').value = hojeIso;
+    document.getElementById('filtro-data-agenda').value = hojeIso;
+
+    async function carregarDadosServidor() {
+      if (!window.dbFirestore) return;
+      try {
+        const docRef = window.fsDoc(window.dbFirestore, "configuracoes", "barbearia_bellan_multi");
+        const docSnap = await window.fsGetDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && data.barbeiros && data.barbeiros.length > 0) {
+            dadosGerais = { ...dadosGerais, ...data };
+          }
+        }
+
+        const agendamentosRef = window.fsCollection(window.dbFirestore, "agendamentos_bellan_multi");
+        const agendamentosSnap = await window.fsGetDocs(agendamentosRef);
+        
+        dadosGerais.barbeiros.forEach(b => b.agendamentos = []);
+        agendamentosSnap.forEach((docItem) => {
+          const ag = docItem.data();
+          const barbeiroAlvo = dadosGerais.barbeiros.find(b => b.id === ag.barbeiroId);
+          if (barbeiroAlvo) {
+            if (!barbeiroAlvo.agendamentos) barbeiroAlvo.agendamentos = [];
+            barbeiroAlvo.agendamentos.push(ag);
+          }
+        });
+
+        atualizarSelectBarbeiros();
+        carregarCamposPainel();
+        atualizarMetricasEComissoesDashboard();
+      } catch (err) {
+        console.error("Erro:", err);
+      }
+    }
+
+    // 📊 Função que calcula dinamicamente o Dashboard e as Comissões do Plano Premium
+    function atualizarMetricasEComissoesDashboard() {
+      let faturamentoTotalGeral = 0;
+      let totalAtendimentosGeral = 0;
+      const corpoTabela = document.getElementById('tabela-comissoes-corpo');
+      corpoTabela.innerHTML = '';
+
+      dadosGerais.barbeiros.forEach(b => {
+        let faturamentoBarbeiro = 0;
+        let qtdServicosBarbeiro = (b.agendamentos || []).length;
+
+        (b.agendamentos || []).forEach(ag => {
+          let precoNum = Number(ag.preco) || 0;
+          faturamentoBarbeiro += precoNum;
+        });
+
+        faturamentoTotalGeral += faturamentoBarbeiro;
+        totalAtendimentosGeral += qtdServicosBarbeiro;
+
+        let comissaoBarbeiro = faturamentoBarbeiro * 0.50; // 50% de comissão
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-3 font-medium text-white">${b.nome} ${b.id === 'bellan' ? '(Proprietário)' : ''}</td>
+          <td class="p-3">${qtdServicosBarbeiro}</td>
+          <td class="p-3">R$ ${faturamentoBarbeiro.toFixed(2).replace('.', ',')}</td>
+          <td class="p-3 text-emerald-400 font-bold">R$ ${comissaoBarbeiro.toFixed(2).replace('.', ',')}</td>
+        `;
+        corpoTabela.appendChild(tr);
+      });
+
+      document.getElementById('stat-faturamento').innerText = `R$ ${faturamentoTotalGeral.toFixed(2).replace('.', ',')}`;
+      document.getElementById('stat-atendimentos').innerText = totalAtendimentosGeral;
+    }
+
+    function atualizarSelectBarbeiros() {
+      const select = document.getElementById('select-barbeiro-ativo');
+      select.innerHTML = '';
+      dadosGerais.barbeiros.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.innerText = `💈 ${b.nome}`;
+        if (b.id === barbeiroAtivoId) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function mudarBarbeiroAtivo(id) {
+      barbeiroAtivoId = id;
+      carregarCamposPainel();
+    }
+
+    function carregarCamposPainel() {
+      const bAtivo = obterDadosBarbeiroAtivo();
+      document.getElementById('input-nome-barbearia').value = dadosGerais.nomeBarbearia || "Barbearia do Bellan";
+      document.getElementById('input-whats-barbeiro').value = bAtivo.whats || "";
+      document.getElementById('input-cor-tema').value = dadosGerais.corTema || "zinc";
+      document.getElementById('titulo-topo-admin').innerText = dadosGerais.nomeBarbearia;
+
+      if (dadosGerais.logoUrl) {
+        document.getElementById('preview-logo-img').src = dadosGerais.logoUrl;
+        document.getElementById('preview-logo-container').classList.remove('hidden');
+        document.getElementById('preview-logo-container').classList.add('flex');
+      }
+
+      renderizarBarbeirosEquipa();
+      renderizarTudo();
+      atualizarMetricasEComissoesDashboard();
+    }
+
+    function converterLogoParaBase64(input) {
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          dadosGerais.logoUrl = e.target.result;
+          document.getElementById('preview-logo-img').src = e.target.result;
+          document.getElementById('preview-logo-container').classList.remove('hidden');
+          document.getElementById('preview-logo-container').classList.add('flex');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    async function salvarConfiguracoesServidor(msg = "Salvo!") {
+      dadosGerais.nomeBarbearia = document.getElementById('input-nome-barbearia').value.trim() || "Barbearia do Bellan";
+      dadosGerais.corTema = document.getElementById('input-cor-tema').value;
+      
+      const bAtivo = obterDadosBarbeiroAtivo();
+      bAtivo.whats = document.getElementById('input-whats-barbeiro').value.trim();
+
+      const novaSenha = document.getElementById('input-nova-senha').value.trim();
+      if (novaSenha) dadosGerais.senhaBellan = novaSenha;
+
+      try {
+        await window.fsSetDoc(window.fsDoc(window.dbFirestore, "configuracoes", "barbearia_bellan_multi"), {
+          nomeBarbearia: dadosGerais.nomeBarbearia,
+          logoUrl: dadosGerais.logoUrl,
+          senhaBellan: dadosGerais.senhaBellan,
+          corTema: dadosGerais.corTema,
+          barbeiros: dadosGerais.barbeiros
+        });
+
+        if (novaSenha) document.getElementById('input-nova-senha').value = '';
+        alert(msg);
+        await carregarDadosServidor();
+      } catch (err) {
+        alert("Erro ao salvar.");
+      }
+    }
+
+    async function verificarSenha() {
+      await carregarDadosServidor();
+      if (document.getElementById('input-senha').value === (dadosGerais.senhaBellan || "1234")) {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('admin-content').classList.remove('hidden');
+        carregarCamposPainel();
+      } else {
+        alert("Senha incorreta!");
+      }
+    }
+
+    function renderizarBarbeirosEquipa() {
+      const container = document.getElementById('lista-barbeiros-admin');
+      container.innerHTML = '';
+      dadosGerais.barbeiros.forEach((b, idx) => {
+        const div = document.createElement('div');
+        div.className = "p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between gap-3";
+        div.innerHTML = `
+          <div>
+            <div class="text-sm font-bold text-slate-100">${b.nome} ${b.id === 'bellan' ? '(Proprietário)' : ''}</div>
+            <div class="text-xs text-slate-400">WhatsApp: ${b.whats || 'Não definido'}</div>
+          </div>
+          ${b.id !== 'bellan' ? `<button onclick="removerBarbeiro(${idx})" class="p-2 text-slate-500 hover:text-red-400 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+    async function adicionarBarbeiro() {
+      const nome = document.getElementById('novo-barbeiro-nome').value.trim();
+      const whats = document.getElementById('novo-barbeiro-whats').value.trim();
+      if (!nome) { alert("Insira o nome!"); return; }
+
+      const novoId = nome.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+      dadosGerais.barbeiros.push({
+        id: novoId,
+        nome: nome,
+        whats: whats,
+        servicos: [{ id: 'corte', nome: 'Corte de Cabelo', preco: 40, duracao: 40 }],
+        diasFechados: [],
+        horariosPausaPadrao: []
+      });
+
+      document.getElementById('novo-barbeiro-nome').value = '';
+      document.getElementById('novo-barbeiro-whats').value = '';
+      await salvarConfiguracoesServidor("Barbeiro adicionado!");
+    }
+
+    async function removerBarbeiro(index) {
+      if (dadosGerais.barbeiros[index].id === 'bellan') {
+        alert("Não pode remover o proprietário (Bellan).");
+        return;
+      }
+      dadosGerais.barbeiros.splice(index, 1);
+      barbeiroAtivoId = 'bellan';
+      await salvarConfiguracoesServidor("Barbeiro removido!");
+    }
+
+    function renderizarAgendaDoDia() {
+      const bAtivo = obterDadosBarbeiroAtivo();
+      const dataFiltro = document.getElementById('filtro-data-agenda').value;
+      const container = document.getElementById('lista-agendamentos-dia');
+      container.innerHTML = '';
+
+      const doDia = (bAtivo.agendamentos || []).filter(a => a.data === dataFiltro);
+      if (doDia.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhum agendamento neste dia.</p>`;
+        return;
+      }
+
+      doDia.sort((a, b) => a.horario.localeCompare(b.horario));
+      doDia.forEach(ag => {
+        const div = document.createElement('div');
+        div.className = "p-3 bg-slate-900 border border-slate-800 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3";
+        
+        const textoLembrete = `Olá ${ag.cliente}, tudo bem? Aqui é da ${dadosGerais.nomeBarbearia || 'Barbearia'}. Passando para confirmar/lembrar do seu agendamento hoje às ${ag.horario} (${ag.servico}). Tudo certo?`;
+
+        let numeroLimpo = (ag.whatsapp || '').replace(/\D/g, '');
+        let linkWhats = "#";
+        if (numeroLimpo.length > 5) {
+          if (!numeroLimpo.startsWith('55')) numeroLimpo = '55' + numeroLimpo;
+          linkWhats = `https://api.whatsapp.com/send?phone=${numeroLimpo}&text=${encodeURIComponent(textoLembrete)}`;
+        }
+
+        div.innerHTML = `
+          <div>
+            <div class="text-sm font-bold text-slate-200">${ag.horario} - ${ag.cliente}</div>
+            <div class="text-xs text-slate-400">${ag.servico} (R$ ${ag.preco}) | Contato: ${ag.whatsapp}</div>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            ${numeroLimpo.length > 5 ? `
+              <a href="${linkWhats}" target="_blank" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1 justify-center flex-1 sm:flex-initial">
+                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp
+              </a>` : ''}
+            <button onclick="copiarTexto('${textoLembrete.replace(/'/g, "\\'")}')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 justify-center flex-1 sm:flex-initial">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Msg
+            </button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+    function copiarTexto(t) { navigator.clipboard.writeText(t); alert("📋 Mensagem copiada!"); }
+
+    function copiarResumoDiaParaTodos() {
+      const bAtivo = obterDadosBarbeiroAtivo();
+      const dataFiltro = document.getElementById('filtro-data-agenda').value;
+      const doDia = (bAtivo.agendamentos || []).filter(a => a.data === dataFiltro);
+      if (doDia.length === 0) { alert("Sem agendamentos neste dia para copiar."); return; }
+
+      let resumo = `📅 Agenda de ${dataFiltro} - ${bAtivo.nome} (${dadosGerais.nomeBarbearia}):\n\n`;
+      doDia.sort((a, b) => a.horario.localeCompare(b.horario));
+      doDia.forEach(ag => {
+        resumo += `⏰ ${ag.horario} - ${ag.cliente} (${ag.servico})\n`;
+      });
+      navigator.clipboard.writeText(resumo);
+      alert("📋 Resumo completo do dia copiado para a área de transferência!");
+    }
+
+    function renderizarServicos() {
+      const bAtivo = obterDadosBarbeiroAtivo();
+      const container = document.getElementById('lista-servicos-admin');
+      const selectManual = document.getElementById('manual-servico');
+      container.innerHTML = ''; selectManual.innerHTML = '';
+      if (!bAtivo.servicos) bAtivo.servicos = [];
+
+      bAtivo.servicos.forEach((s, index) => {
+        const div = document.createElement('div');
+        div.className = "p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between gap-3";
+        div.innerHTML = `
+          <input type="text" value="${s.nome}" onchange="atualizarServico(${index}, 'nome', this.value)" class="bg-transparent text-sm font-bold text-slate-200 flex-1 focus:outline-none">
+          <input type="number" value="${s.preco}" onchange="atualizarServico(${index}, 'preco', this.value)" class="w-20 p-1.5 bg-slate-900 border border-slate-800 rounded text-sm font-bold text-right text-slate-100">
+          <input type="number" value="${s.duracao || 30}" onchange="atualizarServico(${index}, 'duracao', this.value)" class="w-16 p-1.5 bg-slate-900 border border-slate-800 rounded text-sm text-right text-slate-100">
+          <button onclick="removerServico(${index})" class="text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        `;
+        container.appendChild(div);
+
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify(s);
+        opt.innerText = `${s.nome} (R$${s.preco})`;
+        selectManual.appendChild(opt);
+      });
+
+      const selectH = document.getElementById('manual-horario');
+      selectH.innerHTML = '';
+      horariosLista.forEach(h => {
+        const opt = document.createElement('option'); opt.value = h; opt.innerText = h; selectH.appendChild(opt);
+      });
+      lucide.createIcons();
+    }
+
+    async function adicionarServico() {
+      const bAtivo = obterDadosBarbeiroAtivo();
+      const nome = document.getElementById('novo-servico-nome').value;
+      const preco = document.getElementById('novo-servico-preco').value;
+      const duracao = document.getElementById('novo-servico-duracao').value || 30;
+      if (!nome || !preco) return;
+      bAtivo.servicos.push({ id: 'srv-' + Date.now(), nome, preco: Number(preco), duracao: Number(duracao) });
+      document.getElementById('novo-servico-nome').value = '';
+      document.getElementById('novo-servico-preco').value = '';
+      document.getElementById('novo-servico-duracao').value = '';
+      renderizarServicos(); await salvarConfiguracoesServidor("Serviço adicionado!");
+    }
+
+    async function atualizarServico(i, campo, val) {
+      const bAtivo = obterDadosBarbeiroAtivo();
+      bAtivo.servicos[i][campo] = campo === 'nome' ? val : Number(val);
+      await salvarConfiguracoesServidor("Atualizado!");
+    }
+
+    async function removerServico(i) {
+      const bAtivo = obterDadosBarbeiroAtivo();
+      bAtivo.servicos.splice(i, 1);
+      renderizarServicos(); await salvarConfiguracoesServidor("Removido!");
+    }
+
+    async function criarAgendamentoManual() {
+      const bAtivo = obterDadosBarbeiroAtivo();
+      const nome = document.getElementById('manual-nome').value.trim();
+      const servicoObj = JSON.parse(document.getElementById('manual-servico').value);
+      const data = document.getElementById('manual-data').value;
+      const horarioInicio = document.getElementById('manual-horario').value;
+      const whats = document.getElementById('manual-whats').value.trim() || "Manual";
+
+      if (!nome || !data) { alert("Preencha o nome e a data!"); return; }
+
+      const duracaoMin = servicoObj.duracao || 30;
+      const blocos = Math.ceil(duracaoMin / 30);
+      const idx = horariosLista.indexOf(horarioInicio);
+      let horariosOcupados = [];
+      for (let i = 0; i < blocos; i++) {
+        if (idx + i < horariosLista.length) horariosOcupados.push(horariosLista[idx + i]);
+      }
+
+      await window.fsAddDoc(window.fsCollection(window.dbFirestore, "agendamentos_bellan_multi"), {
+        barbeiroId: bAtivo.id, cliente: nome, servico: servicoObj.nome, preco: servicoObj.preco,
+        data: data, horario: horarioInicio, whatsapp: whats, horariosOcupados: horariosOcupados, criadoEm: new Date().toISOString()
+      });
+
+      alert("Agendamento criado com sucesso!");
+      document.getElementById('manual-nome').value = '';
+      document.getElementById('manual-whats').value = '';
+      await carregarDados
